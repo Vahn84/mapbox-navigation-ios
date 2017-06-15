@@ -18,7 +18,6 @@ class ViewController: UIViewController, MGLMapViewDelegate, NavigationViewContro
     @IBOutlet weak var simulateNavigationButton: UIButton!
     @IBOutlet weak var howToBeginLabel: UILabel!
     
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
