@@ -11,6 +11,7 @@ let route = Route(json: jsonRoute, waypoints: [waypoint1, waypoint2], routeOptio
 
 let waitForInterval: TimeInterval = 5
 
+
 class MapboxCoreNavigationTests: XCTestCase {
     
     func testDepart() {
@@ -73,5 +74,39 @@ class MapboxCoreNavigationTests: XCTestCase {
         }
         
         waitForExpectations(timeout: waitForInterval)
+    }
+    
+    func testArrive() {
+        let bundle = Bundle(for: MapboxCoreNavigationTests.self)
+        let filePath = bundle.path(forResource: "tunnel", ofType: "json")!
+        
+        let locations = Array<CLLocation>.locations(from: filePath)!
+        let locationManager = ReplayLocationManager()
+        
+        locationManager.speedMultiplier = 20
+        locationManager.locations = locations
+        
+        let routeFilePath = bundle.path(forResource: "tunnel", ofType: "route")!
+        let route = NSKeyedUnarchiver.unarchiveObject(withFile: routeFilePath) as! Route
+        let navigation = RouteController(along: route, directions: directions)
+        
+        navigation.locationManager = locationManager
+        navigation.resume()
+        
+        self.expectation(forNotification: RouteControllerProgressDidChange.rawValue, object: navigation) { (notification) -> Bool in
+            let routeProgress = notification.userInfo![RouteControllerAlertLevelDidChangeNotificationRouteProgressKey] as? RouteProgress
+            guard let alertLevel = routeProgress?.currentLegProgress.alertUserLevel else {
+                return false
+            }
+            
+            return alertLevel == .arrive
+        }
+        
+        let timeout = locations.last!.timestamp.timeIntervalSince(locations.first!.timestamp) / locationManager.speedMultiplier
+        self.waitForExpectations(timeout: timeout + 2) { (error) in
+            if let error = error {
+                XCTAssert(false, error.localizedDescription)
+            }
+        }
     }
 }

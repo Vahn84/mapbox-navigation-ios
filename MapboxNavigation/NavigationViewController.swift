@@ -168,15 +168,6 @@ public class NavigationViewController: NavigationPulleyViewController, RouteMapV
     public var routeController: RouteController!
     
     /**
-     `simulate` provides simulated location updates along the given route.
-     */
-    public var simulatesLocationUpdates: Bool = false {
-        didSet {
-            routeController.simulatesLocationUpdates = simulatesLocationUpdates
-        }
-    }
-    
-    /**
      `mapView` provides access to the navigation's `MGLMapView` with all its styling capabilities.
      
      Note that you should not change the `mapView`'s delegate.
@@ -197,8 +188,6 @@ public class NavigationViewController: NavigationPulleyViewController, RouteMapV
     var mapViewController: RouteMapViewController?
     
     let routeStepFormatter = RouteStepFormatter()
-    
-    var simulation: SimulatedRoute?
     
     required public init?(coder aDecoder: NSCoder) {
         Style.defaultStyle.apply()
@@ -287,13 +276,6 @@ public class NavigationViewController: NavigationPulleyViewController, RouteMapV
         
         UIApplication.shared.isIdleTimerDisabled = true
         routeController.resume()
-        
-        if simulatesLocationUpdates {
-            guard let coordinates = route.coordinates else { return }
-            simulation = SimulatedRoute(along: coordinates)
-            simulation?.delegate = self
-            simulation?.start()
-        }
     }
     
     public override func viewWillDisappear(_ animated: Bool) {
@@ -301,7 +283,6 @@ public class NavigationViewController: NavigationPulleyViewController, RouteMapV
         
         UIApplication.shared.isIdleTimerDisabled = false
         routeController.suspendLocationUpdates()
-        simulation?.stop()
     }
     
     // MARK: Route controller notifications
@@ -364,12 +345,6 @@ public class NavigationViewController: NavigationPulleyViewController, RouteMapV
         if routeController == nil {
             routeController = RouteController(along: route, directions: directions)
             routeController.delegate = self
-            routeController.simulatesLocationUpdates = simulatesLocationUpdates
-            
-            if Bundle.main.backgroundModeLocationSupported {
-                routeController.locationManager.activityType = .automotiveNavigation
-                routeController.locationManager.allowsBackgroundLocationUpdates = true
-            }
         }
         
         if destination == nil {
@@ -421,6 +396,10 @@ extension NavigationViewController: RouteControllerDelegate {
     public func routeController(_ routeController: RouteController, didFailToRerouteWith error: Error) {
         navigationDelegate?.navigationViewController?(self, didFailToRerouteWith: error)
     }
+    
+    public func routeController(_ routeController: RouteController, didUpdateLocations locations: [CLLocation]) {
+        mapViewController?.mapView.locationManager(routeController.locationManager, didUpdateLocations: locations)
+    }
 }
 
 extension NavigationViewController: RouteTableViewHeaderViewDelegate {
@@ -448,12 +427,5 @@ extension NavigationViewController: PulleyDelegate {
         case .closed:
             break
         }
-    }
-}
-
-extension NavigationViewController: SimulatedRouteDelegate {
-    func simulation(_ locationManager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        mapViewController?.mapView.locationManager(locationManager, didUpdateLocations: locations)
-        routeController.locationManager(locationManager, didUpdateLocations: locations)
     }
 }

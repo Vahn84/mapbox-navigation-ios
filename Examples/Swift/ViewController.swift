@@ -52,12 +52,25 @@ class ViewController: UIViewController, MGLMapViewDelegate, NavigationViewContro
         getRoute()
     }
     
+    @IBAction func replay(_ sender: Any) {
+        let bundle = Bundle(for: ViewController.self)
+        let filePath = bundle.path(forResource: "tunnel", ofType: "json")!
+        let routeFilePath = bundle.path(forResource: "tunnel", ofType: "route")!
+        let route = NSKeyedUnarchiver.unarchiveObject(withFile: routeFilePath) as! Route
+        
+        let locationManager = ReplayLocationManager()
+        locationManager.locations = Array<CLLocation>.locations(from: filePath)
+        
+        startNavigation(along: route, locationManager: locationManager)
+    }
+    
     @IBAction func didTapStartNavigation(_ sender: Any) {
         startNavigation(along: userRoute!)
     }
     
     @IBAction func didTapSimulateNavigation(_ sender: Any) {
-        startNavigation(along: userRoute!, simulatesLocationUpdates: true)
+        let locationManager = SimulatedLocationManager(route: userRoute!)
+        startNavigation(along: userRoute!, locationManager: locationManager)
     }
     
     func resumeNotifications() {
@@ -121,8 +134,8 @@ class ViewController: UIViewController, MGLMapViewDelegate, NavigationViewContro
             }
             
             self?.userRoute = route
-            self?.startNavigationButton.isHidden = false
             self?.simulateNavigationButton.isHidden = false
+            self?.startNavigationButton.isHidden = false
             self?.howToBeginLabel.isHidden = true
             
             // Open method for adding and updating the route line
@@ -132,7 +145,7 @@ class ViewController: UIViewController, MGLMapViewDelegate, NavigationViewContro
         }
     }
     
-    func startNavigation(along route: Route, simulatesLocationUpdates: Bool = false) {
+    func startNavigation(along route: Route, locationManager: NavigationLocationManager? = nil) {
         // Pass through:
         // 1. The route the user will take.
         // 2. A `Directions` object, used for rerouting.
@@ -143,10 +156,14 @@ class ViewController: UIViewController, MGLMapViewDelegate, NavigationViewContro
         // You can get a token here: http://docs.aws.amazon.com/mobile/sdkforios/developerguide/cognito-auth-aws-identity-for-ios.html
         //navigationViewController.voiceController?.identityPoolId = "<#Your AWS IdentityPoolId. Remove Argument if you do not want to use AWS Polly#>"
         
-        navigationViewController.simulatesLocationUpdates = simulatesLocationUpdates
         navigationViewController.routeController.snapsUserLocationAnnotationToRoute = true
+        navigationViewController.routeController.isDeadReckoningEnabled = true
         navigationViewController.voiceController?.volume = 0.5
         navigationViewController.navigationDelegate = self
+        
+        if let locationManager = locationManager {
+            navigationViewController.routeController.locationManager = locationManager
+        }
         
         // Uncomment to apply custom styles
 //        styleForRegular().apply()

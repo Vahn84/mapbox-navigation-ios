@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12120" systemVersion="16E195" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13122.17" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13104.14"/>
         <capability name="Constraints with non-1.0 multipliers" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -56,12 +57,29 @@
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Hpg-4C-EUQ">
+                                        <rect key="frame" x="8" y="28" width="66" height="34"/>
+                                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <inset key="contentEdgeInsets" minX="10" minY="8" maxX="10" maxY="8"/>
+                                        <size key="titleShadowOffset" width="1" height="1"/>
+                                        <state key="normal" title="Replay"/>
+                                        <userDefinedRuntimeAttributes>
+                                            <userDefinedRuntimeAttribute type="number" keyPath="self.layer.cornerRadius">
+                                                <integer key="value" value="4"/>
+                                            </userDefinedRuntimeAttribute>
+                                        </userDefinedRuntimeAttributes>
+                                        <connections>
+                                            <action selector="replay:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ewH-Yn-dzm"/>
+                                        </connections>
+                                    </button>
                                 </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <gestureRecognizers/>
                                 <constraints>
                                     <constraint firstAttribute="bottom" secondItem="Hk0-SM-2Wl" secondAttribute="bottom" id="7Oc-HJ-zKe"/>
+                                    <constraint firstItem="Hpg-4C-EUQ" firstAttribute="leading" secondItem="A3N-JT-loC" secondAttribute="leading" constant="8" id="8I6-yP-p3d"/>
                                     <constraint firstAttribute="bottom" secondItem="8Sl-bV-xyU" secondAttribute="bottom" id="LOb-l9-Iql"/>
+                                    <constraint firstItem="Hpg-4C-EUQ" firstAttribute="top" secondItem="A3N-JT-loC" secondAttribute="top" constant="28" id="MM2-nP-eZh"/>
                                     <constraint firstItem="8Sl-bV-xyU" firstAttribute="width" secondItem="A3N-JT-loC" secondAttribute="width" multiplier="1:2" id="Pds-uP-zSB"/>
                                     <constraint firstAttribute="trailing" secondItem="KIU-cH-IXd" secondAttribute="trailing" id="Q7E-HM-WIz"/>
                                     <constraint firstAttribute="bottom" secondItem="KIU-cH-IXd" secondAttribute="bottom" id="TjN-pb-n3K"/>

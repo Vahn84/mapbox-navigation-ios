@@ -51,6 +51,18 @@ public protocol RouteControllerDelegate: class {
      */
     @objc(routeController:didFailToRerouteWithError:)
     optional func routeController(_ routeController: RouteController, didFailToRerouteWith error: Error)
+    
+    /**
+     Called when the route controller’s location manager receive a location update.
+     
+     These locations can be modified due to replay or simulation but they can
+     also derive from regular location updates from a `CLLocationManager`.
+     
+     - parameter routeController: The route controller that received the new locations.
+     - parameter locations: The locations that were received from the associated location manager.
+     */
+    @objc(routeController:didUpdateLocations:)
+    optional func routeController(_ routeController: RouteController, didUpdateLocations locations: [CLLocation])
 }
 
 /**
@@ -76,25 +88,40 @@ open class RouteController: NSObject {
     /**
      The location manager.
      */
-    public var locationManager = CLLocationManager()
+    public var locationManager: NavigationLocationManager! {
+        didSet {
+            oldValue.delegate = nil
+            if locationManager == nil {
+                locationManager = NavigationLocationManager()
+            }
+            locationManager.activityType = routeProgress.route.routeOptions.activityType
+            locationManager.delegate = self
+        }
+    }
     
+    /**
+     If true, location updates will be simulated when driving through tunnels or
+     other areas where there is none or bad GPS reception.
+     */
+    public var isDeadReckoningEnabled = false
     
     /**
      Details about the user’s progress along the current route, leg, and step.
      */
-    public var routeProgress: RouteProgress
-    
+    public var routeProgress: RouteProgress {
+        didSet {
+            var userInfo = [String: Any]()
+            if let location = locationManager.location {
+                userInfo[MBRouteControllerNotificationLocationKey] = location
+            }
+            NotificationCenter.default.post(name: RouteControllerDidReroute, object: self, userInfo: userInfo)
+        }
+    }
     
     /**
      If true, the user puck is snapped to closest location on the route.
      */
-    public var snapsUserLocationAnnotationToRoute = false
-    
-    public var simulatesLocationUpdates: Bool = false {
-        didSet {
-            locationManager.delegate = simulatesLocationUpdates ? nil : self
-        }
-    }
+    public var snapsUserLocationAnnotationToRoute = true
     
     var lastReRouteLocation: CLLocation?
     
@@ -106,16 +133,15 @@ open class RouteController: NSObject {
      - parameter route: The route to follow.
      - parameter directions: The Directions object that created `route`.
      */
-    @objc(initWithRoute:directions:)
-    public init(along route: Route, directions: Directions = Directions.shared) {
+    @objc(initWithRoute:directions:locationManager:)
+    public init(along route: Route, directions: Directions = Directions.shared, locationManager: NavigationLocationManager = NavigationLocationManager()) {
         self.directions = directions
         self.routeProgress = RouteProgress(route: route)
+        self.locationManager = locationManager
         super.init()
         
+        locationManager.activityType = route.routeOptions.activityType
         locationManager.delegate = self
-        if CLLocationManager.authorizationStatus() == .notDetermined {
-            locationManager.requestWhenInUseAuthorization()
-        }
     }
     
     deinit {
@@ -142,9 +168,44 @@ open class RouteController: NSObject {
 }
 
 extension RouteController: CLLocationManagerDelegate {
+    
+    func interpolateLocation() {
+        guard let location = locationManager.lastKnownLocation else { return }
+        guard let polyline = routeProgress.route.coordinates else { return }
+        
+        let distance = location.speed as CLLocationDistance
+        
+        guard let interpolatedCoordinate = coordinate(at: routeProgress.distanceTraveled+distance, fromStartOf: polyline) else {
+            return
+        }
+        
+        var course = location.course
+        if let upcomingCoordinate = coordinate(at: routeProgress.distanceTraveled+(distance*2), fromStartOf: polyline) {
+            course = interpolatedCoordinate.direction(to: upcomingCoordinate)
+        }
+        
+        let interpolatedLocation = CLLocation(coordinate: interpolatedCoordinate,
+                                              altitude: location.altitude,
+                                              horizontalAccuracy: location.horizontalAccuracy,
+                                              verticalAccuracy: location.verticalAccuracy,
+                                              course: course,
+                                              speed: location.speed,
+                                              timestamp: Date())
+        
+        self.locationManager(self.locationManager, didUpdateLocations: [interpolatedLocation])
+    }
+    
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else {
             return
+        }
+        
+        delegate?.routeController?(self, didUpdateLocations: [location])
+        
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(interpolateLocation), object: nil)
+        
+        if isDeadReckoningEnabled {
+            perform(#selector(interpolateLocation), with: nil, afterDelay: 1.1)
         }
         
         let userSnapToStepDistanceFromManeuver = distance(along: routeProgress.currentLegProgress.currentStep.coordinates!, from: location.coordinate)
@@ -307,9 +368,6 @@ extension RouteController: CLLocationManagerDelegate {
                 strongSelf.routeProgress = RouteProgress(route: route)
                 strongSelf.routeProgress.currentLegProgress.stepIndex = 0
                 strongSelf.delegate?.routeController?(strongSelf, didRerouteAlong: route)
-                NotificationCenter.default.post(name: RouteControllerDidReroute, object: self, userInfo: [
-                    MBRouteControllerNotificationRouteKey: location
-                    ])
             } else if let error = error {
                 strongSelf.delegate?.routeController?(strongSelf, didFailToRerouteWith: error)
                 NotificationCenter.default.post(name: RouteControllerDidFailToReroute, object: self, userInfo: [
