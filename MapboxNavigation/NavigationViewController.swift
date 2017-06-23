@@ -110,7 +110,7 @@ public protocol NavigationViewControllerDelegate {
  for the given route and support for basic styling.
  */
 @objc(MBNavigationViewController)
-public class NavigationViewController: NavigationPulleyViewController, RouteMapViewControllerDelegate {
+open public class NavigationViewController: NavigationPulleyViewController, RouteMapViewControllerDelegate {
     
     // A `route` object constructed by [MapboxDirections.swift](https://github.com/mapbox/MapboxDirections.swift)
     public var route: Route! {
