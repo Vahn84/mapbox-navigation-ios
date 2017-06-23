@@ -39,7 +39,7 @@ public class ReplayLocationManager: NavigationLocationManager {
     @objc fileprivate func tick() {
         let location = locations[currentIndex]
         lastKnownLocation = location
-        delegate?.locationManager!(self, didUpdateLocations: [location])
+        delegate?.locationManager?(self, didUpdateLocations: [location])
         NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(tick), object: nil)
         
         if currentIndex < locations.count - 1  {

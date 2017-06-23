@@ -91,9 +91,6 @@ open class RouteController: NSObject {
     public var locationManager: NavigationLocationManager! {
         didSet {
             oldValue.delegate = nil
-            if locationManager == nil {
-                locationManager = NavigationLocationManager()
-            }
             locationManager.activityType = routeProgress.route.routeOptions.activityType
             locationManager.delegate = self
         }
