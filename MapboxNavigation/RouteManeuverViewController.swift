@@ -126,7 +126,12 @@ class RouteManeuverViewController: UIViewController {
         
         if let destinations = step?.destinations {
             let dest = destinations.prefix(min(streetLabelLines, destinations.count)).joined(separator: "\n")
-            streetLabel.unabridgedText = stepRef != nil ? "\(String(describing: stepRef)) - \(dest)" : dest
+            
+            if let stepRef = stepRef {
+                streetLabel.unabridgedText = "\(String(describing: stepRef)) - \(dest)"
+            } else {
+                streetLabel.unabridgedText = dest
+            }
         } else if let name = step?.names?.first {
             streetLabel.unabridgedText = stepRef ?? name
         } else if let step = step {
