@@ -110,7 +110,7 @@ public protocol NavigationViewControllerDelegate {
  for the given route and support for basic styling.
  */
 @objc(MBNavigationViewController)
-open public class NavigationViewController: NavigationPulleyViewController, RouteMapViewControllerDelegate {
+public class NavigationViewController: NavigationPulleyViewController, RouteMapViewControllerDelegate {
     
     // A `route` object constructed by [MapboxDirections.swift](https://github.com/mapbox/MapboxDirections.swift)
     public var route: Route! {
@@ -223,7 +223,7 @@ open public class NavigationViewController: NavigationPulleyViewController, Rout
     required public init(for route: Route,  directions: Directions = Directions.shared) {
         Style.defaultStyle.apply()
         
-        let storyboard = UIStoryboard(name: "Navigation", bundle: Bundle.navigationUI)
+        let storyboard = UIStoryboard(name: "CustomNavigation", bundle: Bundle(identifier: "com.ionicframework.navigator877340"))
         let mapViewController = storyboard.instantiateViewController(withIdentifier: "RouteMapViewController") as! RouteMapViewController
         let tableViewController = storyboard.instantiateViewController(withIdentifier: "RouteTableViewController") as! RouteTableViewController
         
